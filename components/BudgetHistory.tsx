@@ -102,9 +102,15 @@ const BudgetHistory: React.FC<BudgetHistoryProps> = ({ budgets, settings, onDele
   };
 
   const sendWhatsApp = (b: Budget) => {
+    // Detalle de los Rubros (Items principales)
     const itemsDetail = b.items
       .map(i => `• *${i.name}*\n  ${i.quantity} ${i.unit} x ${settings.currency}${i.price.toLocaleString()} = _${settings.currency}${i.subtotal.toLocaleString()}_`)
       .join('\n\n');
+
+    // Detalle de los Insumos de Campo (Materiales requeridos)
+    const materialsDetail = b.requiredMaterials && b.requiredMaterials.length > 0
+      ? `\n\n📦 *INSUMOS DE CAMPO REQUERIDOS:*\n` + b.requiredMaterials.map(m => `• ${m.name} [Cantidad: ${m.quantity}]`).join('\n')
+      : '';
 
     const text = `👷 *${settings.name.toUpperCase()} 🏗️*
 📋 *COTIZACIÓN TÉCNICA*
@@ -113,7 +119,7 @@ const BudgetHistory: React.FC<BudgetHistoryProps> = ({ budgets, settings, onDele
 📄 *Expediente:* ${b.id}
 
 *DETALLE DE RUBROS:*
-${itemsDetail}
+${itemsDetail}${materialsDetail}
 
 ---------------------------------
 💰 *TOTAL PRESUPUESTO:* ${settings.currency}${b.total.toLocaleString()}
@@ -181,7 +187,6 @@ Saludos, ${settings.ownerName}.`;
                     <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full border ${statusColors[b.status]}`}>
                       {b.status}
                     </span>
-                    {/* Menu rápido de cambio de estado */}
                     <div className="absolute right-0 top-full mt-1 bg-white shadow-2xl rounded-xl border border-slate-200 p-1 hidden group-hover/status:block z-20">
                       {(['pendiente', 'aceptado', 'rechazado'] as BudgetStatus[]).map(s => (
                         <button key={s} onClick={() => onUpdateStatus(b.id, s)} className="w-full text-left px-3 py-1.5 text-[9px] font-black uppercase hover:bg-slate-50 rounded-lg">{s}</button>
@@ -216,7 +221,6 @@ Saludos, ${settings.ownerName}.`;
                 </div>
               </div>
 
-              {/* AREA DE ELIMINACION - Siempre disponible al fondo */}
               <button 
                 onClick={() => { if(confirm('¿ELIMINAR ESTE EXPEDIENTE DE FORMA PERMANENTE?')) onDelete(b.id) }} 
                 className="w-full py-3 bg-slate-50 text-[9px] font-black text-slate-300 uppercase hover:bg-red-50 hover:text-red-500 border-t border-slate-100 transition-all flex items-center justify-center gap-2"
@@ -229,7 +233,6 @@ Saludos, ${settings.ownerName}.`;
         </div>
       )}
 
-      {/* MODAL DETALLE EXPEDIENTE */}
       {selectedBudget && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-950/90 backdrop-blur-md p-4 overflow-y-auto">
           <div className="bg-white w-full max-w-4xl rounded-[2.5rem] shadow-2xl overflow-hidden flex flex-col border-b-[12px] border-slate-900 animate-in zoom-in-95">
