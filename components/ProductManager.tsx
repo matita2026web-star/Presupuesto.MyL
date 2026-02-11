@@ -1,8 +1,10 @@
 
+
 import React, { useState } from 'react';
 import { 
   Plus, Search, Trash2, Edit3, Save, X, 
-  Hammer, HardHat, Package, Construction
+  HardHat, Package, Construction, 
+  Layers, Info, DollarSign, Type
 } from 'lucide-react';
 import { Product, UnitType } from '../types';
 
@@ -16,24 +18,35 @@ const ProductManager: React.FC<ProductManagerProps> = ({ products, onUpdate }) =
   const [searchTerm, setSearchTerm] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
 
-  const [form, setForm] = useState<Partial<Product>>({
+  // Usamos un estado que permita string para el precio, así se puede borrar el '0'
+  const [form, setForm] = useState<{
+    name: string;
+    price: string | number;
+    unit: UnitType;
+    category: string;
+  }>({
     name: '',
-    price: 0,
+    price: '',
     unit: UnitType.UNIDAD,
     category: 'General'
   });
 
   const handleSave = () => {
-    if (!form.name || form.price === undefined) return;
+    const priceNum = typeof form.price === 'string' ? parseFloat(form.price) : form.price;
+    
+    if (!form.name || isNaN(priceNum as number) || form.name.trim() === '') {
+      alert("La descripción técnica y un precio válido son obligatorios.");
+      return;
+    }
     
     if (editingId) {
-      onUpdate(products.map(p => p.id === editingId ? { ...p, ...form } as Product : p));
+      onUpdate(products.map(p => p.id === editingId ? { ...p, ...form, price: priceNum } as Product : p));
     } else {
       const newProduct: Product = {
         id: Date.now().toString(),
         name: form.name,
-        price: form.price,
-        unit: form.unit as UnitType,
+        price: priceNum as number,
+        unit: form.unit,
         category: form.category || 'General'
       };
       onUpdate([...products, newProduct]);
@@ -43,14 +56,19 @@ const ProductManager: React.FC<ProductManagerProps> = ({ products, onUpdate }) =
 
   const handleEdit = (p: Product) => {
     setEditingId(p.id);
-    setForm(p);
+    setForm({
+      name: p.name,
+      price: p.price,
+      unit: p.unit,
+      category: p.category
+    });
     setIsAdding(true);
   };
 
   const resetForm = () => {
     setIsAdding(false);
     setEditingId(null);
-    setForm({ name: '', price: 0, unit: UnitType.UNIDAD, category: 'General' });
+    setForm({ name: '', price: '', unit: UnitType.UNIDAD, category: 'General' });
   };
 
   const filtered = products.filter(p => 
@@ -59,160 +77,225 @@ const ProductManager: React.FC<ProductManagerProps> = ({ products, onUpdate }) =
   );
 
   return (
-    <div className="space-y-12 animate-in fade-in duration-700">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-10 border-b-4 border-slate-900 pb-12">
-        <div className="space-y-2">
-          <h2 className="text-6xl font-black text-slate-900 uppercase italic tracking-tighter">BASE DE <span className="text-amber-500">INSUMOS</span></h2>
-          <p className="text-slate-500 font-bold uppercase tracking-[0.4em] text-xs italic">Catálogo Maestro de Precios y Rendimientos Técnicos</p>
+    <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+      {/* Header Industrial */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-slate-200 pb-6">
+        <div>
+          <div className="flex items-center gap-2 mb-1">
+            <div className="p-1.5 bg-amber-500 rounded text-slate-900">
+              <Layers size={18} />
+            </div>
+            <h2 className="text-xl font-black text-slate-900 uppercase tracking-tight italic">MAESTRO DE INSUMOS</h2>
+          </div>
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.2em] ml-1">Control de Precios y Rendimientos Técnicos</p>
         </div>
         <button 
           onClick={() => setIsAdding(true)}
-          className="bg-slate-950 hover:bg-slate-800 text-white px-12 py-6 rounded-[2.5rem] font-black shadow-2xl shadow-slate-950/20 transition-all flex items-center justify-center gap-5 uppercase italic tracking-tighter text-xl border-b-8 border-amber-500 active:scale-95"
+          className="bg-slate-900 text-white px-6 py-3 rounded-xl font-black flex items-center justify-center gap-2 uppercase text-[11px] tracking-widest shadow-lg shadow-slate-200 active:scale-95 transition-all border-b-4 border-slate-700 hover:bg-slate-800"
         >
-          <Plus size={28} className="text-amber-500" />
-          NUEVO REGISTRO
+          <Plus size={16} className="text-amber-500" />
+          Añadir Registro
         </button>
       </div>
 
+      {/* Buscador Profesional */}
+      <div className="relative group">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-amber-500 transition-colors">
+          <Search size={18}/>
+        </div>
+        <input 
+          type="text" 
+          placeholder="BUSCAR POR DESCRIPCIÓN O RUBRO..." 
+          value={searchTerm} 
+          onChange={(e) => setSearchTerm(e.target.value)} 
+          className="w-full bg-white pl-12 pr-4 py-4 rounded-xl border border-slate-200 outline-none focus:border-amber-500 text-xs font-bold shadow-sm transition-all uppercase placeholder:text-slate-300 tracking-wider" 
+        />
+      </div>
+
+      {/* Modal de Carga Mejorado */}
       {isAdding && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-slate-950/90 backdrop-blur-xl">
-          <div className="bg-white w-full max-w-2xl rounded-[4rem] shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 border-x-[12px] border-slate-950 relative">
-            <div className="absolute top-0 left-0 w-full h-4 bg-amber-500"></div>
-            <div className="p-14 space-y-12">
-              <div className="flex justify-between items-center">
-                <h3 className="text-4xl font-black text-slate-900 uppercase italic tracking-tighter leading-none">{editingId ? 'Editar Ítem' : 'Añadir Insumo de Obra'}</h3>
-                <button onClick={resetForm} className="p-5 bg-slate-100 hover:bg-slate-200 rounded-3xl transition-all shadow-md"><X size={32}/></button>
-              </div>
-
-              <div className="space-y-10">
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] ml-4">Descripción Técnica del Rubro</label>
-                  <input 
-                    type="text" 
-                    value={form.name}
-                    onChange={(e) => setForm({...form, name: e.target.value})}
-                    placeholder="Ej: Colocación de Porcelanato"
-                    className="w-full bg-slate-50 px-10 py-8 rounded-3xl border-2 border-slate-100 focus:border-amber-500 outline-none font-black uppercase italic text-2xl transition-all shadow-inner"
-                  />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+          <div className="bg-white w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border-x-4 border-slate-900 animate-in zoom-in-95">
+            <header className="bg-slate-900 p-6 flex justify-between items-center">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-amber-500 rounded-lg flex items-center justify-center text-slate-900 shadow-lg shadow-amber-500/20">
+                  <Construction size={20} />
                 </div>
+                <div>
+                  <h3 className="text-sm font-black text-white uppercase tracking-tight">
+                    {editingId ? 'Editar Especificación' : 'Nueva Ficha Técnica'}
+                  </h3>
+                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Entrada de datos maestros</p>
+                </div>
+              </div>
+              <button onClick={resetForm} className="p-2 text-slate-500 hover:text-white transition-colors"><X size={24}/></button>
+            </header>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                   <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] ml-4">Rubro / Categoría</label>
+            <div className="p-8 space-y-8">
+              {/* Bloque de Identificación */}
+              <div className="space-y-5">
+                <div className="relative">
+                  <label className="absolute -top-2 left-3 px-2 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Descripción del Insumo</label>
+                  <div className="flex items-center bg-slate-50 border-2 border-slate-100 rounded-xl px-4 focus-within:border-amber-500 transition-colors">
+                    <Type size={16} className="text-slate-300 mr-3" />
                     <input 
                       type="text" 
-                      value={form.category}
-                      onChange={(e) => setForm({...form, category: e.target.value})}
-                      placeholder="Mano de Obra, Gruesa..."
-                      className="w-full bg-slate-50 px-10 py-8 rounded-3xl border-2 border-slate-100 focus:border-amber-500 outline-none font-bold uppercase text-xl transition-all shadow-inner"
+                      value={form.name} 
+                      onChange={(e) => setForm({...form, name: e.target.value})} 
+                      placeholder="EJ: MANO DE OBRA REVOQUE GRUESO" 
+                      className="w-full py-4 bg-transparent outline-none font-bold text-xs uppercase text-slate-700" 
                     />
-                  </div>
-                  <div className="space-y-4">
-                    <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] ml-4">Unidad Técnico/Comercial</label>
-                    <select 
-                      value={form.unit}
-                      onChange={(e) => setForm({...form, unit: e.target.value as UnitType})}
-                      className="w-full bg-slate-50 px-10 py-8 rounded-3xl border-2 border-slate-100 focus:border-amber-500 outline-none font-black uppercase italic text-xl transition-all cursor-pointer appearance-none shadow-inner"
-                    >
-                      {Object.values(UnitType).map(u => <option key={u} value={u}>{u.toUpperCase()}</option>)}
-                    </select>
                   </div>
                 </div>
 
-                <div className="space-y-4">
-                  <label className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] ml-4">Costo Unitario Vigente</label>
-                  <input 
-                    type="number" 
-                    value={form.price}
-                    onChange={(e) => setForm({...form, price: parseFloat(e.target.value) || 0})}
-                    className="w-full bg-slate-950 text-amber-500 px-12 py-10 rounded-[2.5rem] outline-none font-black text-6xl italic text-center transition-all shadow-2xl border-b-8 border-amber-600"
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="relative">
+                    <label className="absolute -top-2 left-3 px-2 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Rubro</label>
+                    <div className="flex items-center bg-slate-50 border-2 border-slate-100 rounded-xl px-4 focus-within:border-amber-500 transition-colors">
+                      <Layers size={16} className="text-slate-300 mr-3" />
+                      <input 
+                        type="text" 
+                        value={form.category} 
+                        onChange={(e) => setForm({...form, category: e.target.value})} 
+                        placeholder="ALBAÑILERÍA" 
+                        className="w-full py-4 bg-transparent outline-none font-bold text-[10px] uppercase text-slate-700" 
+                      />
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <label className="absolute -top-2 left-3 px-2 bg-white text-[9px] font-black text-slate-400 uppercase tracking-widest z-10">Unidad</label>
+                    <div className="flex items-center bg-slate-50 border-2 border-slate-100 rounded-xl px-4 focus-within:border-amber-500 transition-colors">
+                      <Package size={16} className="text-slate-300 mr-3" />
+                      <select 
+                        value={form.unit} 
+                        onChange={(e) => setForm({...form, unit: e.target.value as UnitType})} 
+                        className="w-full py-4 bg-transparent outline-none font-bold text-[10px] uppercase text-slate-700 appearance-none cursor-pointer"
+                      >
+                        {Object.values(UnitType).map(u => <option key={u} value={u}>{u.toUpperCase()}</option>)}
+                      </select>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <button 
-                onClick={handleSave}
-                className="w-full bg-slate-950 hover:bg-slate-800 text-white font-black py-10 rounded-[3rem] shadow-2xl transition-all flex items-center justify-center gap-6 uppercase italic tracking-tighter text-2xl border-b-8 border-amber-500"
-              >
-                <Save size={32} className="text-amber-500" />
-                CONFIRMAR REGISTRO
-              </button>
+              {/* Bloque de Costos - Con corrección de borrado de 0 */}
+              <div className="bg-slate-50 p-6 rounded-2xl border-2 border-slate-100 space-y-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <DollarSign size={14} className="text-amber-500" />
+                  <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Valor Unitario de Referencia</span>
+                </div>
+                <div className="relative">
+                  <div className="absolute left-6 top-1/2 -translate-y-1/2 font-black text-amber-500 text-2xl">$</div>
+                  <input 
+                    type="number" 
+                    value={form.price} 
+                    onChange={(e) => setForm({...form, price: e.target.value})} 
+                    placeholder="0"
+                    className="w-full bg-slate-900 text-white pl-14 pr-6 py-6 rounded-xl border-none outline-none font-mono font-bold text-4xl text-center shadow-xl ring-2 ring-transparent focus:ring-amber-500 transition-all" 
+                  />
+                </div>
+                <p className="text-center text-[9px] font-bold text-slate-400 uppercase tracking-tighter">Ingrese el valor neto para cálculos automáticos</p>
+              </div>
+
+              <div className="flex gap-3 pt-2">
+                <button onClick={resetForm} className="flex-1 py-4 bg-slate-100 text-slate-500 font-black rounded-xl uppercase text-[10px] tracking-widest hover:bg-slate-200 transition-colors">
+                  Cancelar
+                </button>
+                <button 
+                  onClick={handleSave} 
+                  className="flex-[2] bg-slate-900 text-white font-black py-4 rounded-xl shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all uppercase text-[10px] tracking-widest border-b-4 border-slate-700 hover:bg-slate-800"
+                >
+                  <Save size={18} className="text-amber-500" />
+                  {editingId ? 'Guardar Cambios' : 'Confirmar Alta'}
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      <section className="bg-white rounded-[4rem] border-4 border-slate-950 shadow-2xl overflow-hidden">
-        <div className="p-12 border-b-4 border-slate-100 bg-slate-50/50 flex items-center gap-10">
-          <div className="p-5 bg-white rounded-3xl shadow-xl border-2 border-slate-100">
-             <Search size={36} className="text-amber-500" />
-          </div>
-          <input 
-            type="text" 
-            placeholder="Filtrar base de datos por rubro o descripción..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="bg-transparent flex-1 outline-none font-black text-slate-900 uppercase italic tracking-tighter text-4xl placeholder:text-slate-200"
-          />
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+      {/* Planilla Técnica (Tabla) */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div className="overflow-x-auto custom-scrollbar">
+          <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="text-[10px] font-black text-slate-400 uppercase tracking-[0.5em] border-b-2 border-slate-100 bg-slate-50">
-                <th className="px-12 py-10 italic">Insumo / Descripción Técnica</th>
-                <th className="px-12 py-10">Categoría</th>
-                <th className="px-12 py-10">Unidad</th>
-                <th className="px-12 py-10 text-right">Precio Actual</th>
-                <th className="px-12 py-10 text-center">Gestión</th>
+              <tr className="bg-slate-50 border-b border-slate-200">
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest">Descripción Técnica</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Rubro</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Unidad</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-right">Costo Vigente</th>
+                <th className="px-6 py-4 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Gestión</th>
               </tr>
             </thead>
-            <tbody className="divide-y-2 divide-slate-50">
+            <tbody className="divide-y divide-slate-100">
               {filtered.map(p => (
-                <tr key={p.id} className="hover:bg-slate-50/80 group transition-all">
-                  <td className="px-12 py-12">
-                    <div className="flex items-center gap-8">
-                      <div className="w-20 h-20 rounded-[2rem] bg-slate-100 flex items-center justify-center text-slate-300 group-hover:bg-slate-950 group-hover:text-amber-500 transition-all shadow-inner border-2 border-transparent group-hover:border-amber-500">
-                        <Construction size={36} />
+                <tr key={p.id} className="hover:bg-slate-50/80 transition-all group">
+                  <td className="px-6 py-5">
+                    <div className="flex items-center gap-4">
+                      <div className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center text-slate-400 shrink-0 group-hover:bg-slate-900 group-hover:text-amber-500 transition-all border border-transparent group-hover:border-amber-500/30">
+                        <HardHat size={16} />
                       </div>
-                      <span className="font-black text-slate-900 uppercase italic tracking-tighter text-3xl group-hover:translate-x-2 transition-transform">{p.name}</span>
+                      <span className="text-xs font-black text-slate-700 uppercase truncate max-w-[200px]" title={p.name}>
+                        {p.name}
+                      </span>
                     </div>
                   </td>
-                  <td className="px-12 py-12">
-                    <span className="px-6 py-2.5 bg-slate-900 text-amber-500 rounded-2xl text-[10px] font-black uppercase tracking-widest border-l-4 border-amber-500 shadow-lg">
+                  <td className="px-6 py-5 text-center">
+                    <span className="inline-block px-3 py-1 bg-slate-100 text-slate-500 rounded-lg text-[9px] font-black uppercase tracking-widest border border-slate-200 group-hover:bg-white group-hover:text-slate-800 transition-colors">
                       {p.category}
                     </span>
                   </td>
-                  <td className="px-12 py-12 text-slate-400 font-black uppercase tracking-[0.2em] italic text-sm">{p.unit}</td>
-                  <td className="px-12 py-12 text-right font-black text-slate-900 text-4xl italic tracking-tighter">${p.price.toLocaleString()}</td>
-                  <td className="px-12 py-12">
-                    <div className="flex items-center justify-center gap-6">
-                      <button onClick={() => handleEdit(p)} className="p-5 text-slate-300 hover:text-slate-900 hover:bg-white rounded-2xl transition-all shadow-sm border border-transparent hover:border-slate-200">
-                        <Edit3 size={28} />
+                  <td className="px-6 py-5 text-center font-mono text-[10px] font-bold text-slate-400 uppercase">{p.unit}</td>
+                  <td className="px-6 py-5 text-right font-mono font-black text-slate-900 italic text-sm">
+                    ${p.price.toLocaleString()}
+                  </td>
+                  <td className="px-6 py-5">
+                    <div className="flex items-center justify-center gap-1">
+                      <button onClick={() => handleEdit(p)} className="p-2.5 text-slate-300 hover:text-slate-900 hover:bg-white rounded-xl transition-all shadow-sm border border-transparent hover:border-slate-100">
+                        <Edit3 size={16}/>
                       </button>
-                      <button onClick={() => { if(confirm('¿Eliminar registro maestro?')) onUpdate(products.filter(item => item.id !== p.id)) }} className="p-5 text-slate-300 hover:text-red-600 hover:bg-red-50 rounded-2xl transition-all shadow-sm">
-                        <Trash2 size={28} />
+                      <button 
+                        onClick={() => { if(confirm('¿ELIMINAR ESTE INSUMO DEL CATÁLOGO MAESTRO?')) onUpdate(products.filter(item => item.id !== p.id)) }} 
+                        className="p-2.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-xl transition-all"
+                      >
+                        <Trash2 size={16}/>
                       </button>
                     </div>
                   </td>
                 </tr>
               ))}
-              {filtered.length === 0 && (
-                <tr>
-                   <td colSpan={5} className="py-56 text-center">
-                      <div className="flex flex-col items-center gap-10 text-slate-100">
-                         <div className="w-40 h-40 bg-slate-50 rounded-[4rem] flex items-center justify-center border-4 border-dashed border-slate-100">
-                            <HardHat size={120} className="opacity-5" />
-                         </div>
-                         <p className="font-black uppercase tracking-[0.6em] italic text-sm text-slate-200">No hay registros que coincidan</p>
-                      </div>
-                   </td>
-                </tr>
-              )}
             </tbody>
           </table>
         </div>
-      </section>
+
+        {filtered.length === 0 && (
+          <div className="py-24 text-center">
+            <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-100">
+              <Package size={24} className="text-slate-200" />
+            </div>
+            <p className="text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] italic">No se hallaron registros técnicos</p>
+          </div>
+        )}
+      </div>
+
+      {/* Footer Informativo */}
+      <div className="bg-slate-900 p-5 rounded-2xl flex items-center justify-between text-white shadow-xl border-b-4 border-amber-500">
+        <div className="flex items-center gap-4">
+           <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-amber-500 border border-slate-700">
+              <Info size={20} />
+           </div>
+           <div>
+              <p className="text-[10px] font-black uppercase tracking-widest text-amber-500 mb-0.5">Gestión de Catálogo</p>
+              <p className="text-[9px] font-medium text-slate-400 leading-tight">
+                Los precios actualizados aquí se reflejarán en todas las nuevas cotizaciones.
+              </p>
+           </div>
+        </div>
+        <div className="text-right">
+           <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest mb-1">Items Totales</p>
+           <p className="text-lg font-black font-mono text-white leading-none">{products.length}</p>
+        </div>
+      </div>
     </div>
   );
 };
