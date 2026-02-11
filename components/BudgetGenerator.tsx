@@ -1,8 +1,9 @@
 
+
 import React, { useState } from 'react';
 import { 
   Plus, Trash2, Save, User, Calculator, 
-  Tag, Percent, Hammer, Package, Construction, CheckCircle2
+  Tag, Percent, Hammer, Package, Construction, CheckCircle2, Calendar
 } from 'lucide-react';
 import { Product, Budget, BudgetOrderItem, ClientData, BusinessSettings, RequiredMaterial } from '../types';
 
@@ -80,11 +81,14 @@ const BudgetGenerator: React.FC<BudgetGeneratorProps> = ({ products, settings, o
 
   const filteredProducts = products.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
 
+  const expirationDate = new Date();
+  expirationDate.setDate(expirationDate.getDate() + validDays);
+
   return (
     <div className="flex flex-col lg:grid lg:grid-cols-4 gap-6 animate-slide-up pb-24">
       <div className="lg:col-span-3 space-y-6">
         
-        {/* DATOS CLIENTE - Diseño compacto para móvil */}
+        {/* DATOS CLIENTE */}
         <section className="bg-white p-6 rounded-3xl border-l-[10px] border-amber-500 shadow-lg">
           <h3 className="text-lg font-black text-slate-900 mb-6 flex items-center gap-3 uppercase italic tracking-tighter">
             <User size={18} className="text-amber-500" />
@@ -106,7 +110,7 @@ const BudgetGenerator: React.FC<BudgetGeneratorProps> = ({ products, settings, o
           </div>
         </section>
 
-        {/* BUSCADOR DE RUBROS - Interfaz móvil optimizada */}
+        {/* BUSCADOR DE RUBROS */}
         <section className="bg-slate-950 p-6 rounded-[2rem] shadow-xl relative overflow-hidden">
           <div className="absolute top-0 right-0 p-4 opacity-5">
             <Construction size={100} className="text-amber-500" />
@@ -143,14 +147,14 @@ const BudgetGenerator: React.FC<BudgetGeneratorProps> = ({ products, settings, o
           </div>
         </section>
 
-        {/* LISTADO DE ITEMS - Mobile-Ready (Cartas en móvil, Tabla en desktop) */}
+        {/* LISTADO DE ITEMS */}
         <div className="space-y-3">
           <div className="flex items-center justify-between px-2">
              <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Presupuesto Detallado</h4>
              <span className="text-[10px] font-black text-amber-600 bg-amber-50 px-2 py-0.5 rounded-lg">{items.length} ítems</span>
           </div>
           
-          <div className="md:hidden space-y-3"> {/* Vista Móvil */}
+          <div className="md:hidden space-y-3">
             {items.map((item, idx) => (
               <div key={idx} className="bg-white p-4 rounded-2xl border-2 border-slate-200 shadow-sm relative group">
                 <button onClick={() => removeItem(idx)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-red-500"><Trash2 size={16}/></button>
@@ -173,7 +177,7 @@ const BudgetGenerator: React.FC<BudgetGeneratorProps> = ({ products, settings, o
             )}
           </div>
 
-          <div className="hidden md:block bg-white rounded-3xl border-2 border-slate-200 overflow-hidden"> {/* Vista Desktop */}
+          <div className="hidden md:block bg-white rounded-3xl border-2 border-slate-200 overflow-hidden">
             <table className="w-full text-left">
               <thead className="bg-slate-950 text-[9px] font-black text-amber-500 uppercase tracking-[0.2em]">
                 <tr>
@@ -202,7 +206,7 @@ const BudgetGenerator: React.FC<BudgetGeneratorProps> = ({ products, settings, o
           </div>
         </div>
 
-        {/* MATERIALES - Lista simplificada */}
+        {/* MATERIALES */}
         <section className="bg-slate-100 p-6 rounded-3xl border-2 border-dashed border-slate-200">
           <div className="flex items-center gap-3 mb-6">
             <Package size={18} className="text-slate-600" />
@@ -224,39 +228,56 @@ const BudgetGenerator: React.FC<BudgetGeneratorProps> = ({ products, settings, o
         </section>
       </div>
 
-      {/* LIQUIDACION - Sticky en móvil (al fondo) */}
+      {/* LIQUIDACION */}
       <div className="lg:col-span-1">
         <div className="bg-slate-950 text-white p-6 rounded-[2.5rem] shadow-2xl border-t-[10px] border-amber-500 space-y-6">
           <h3 className="text-lg font-black flex items-center gap-3 uppercase italic tracking-tighter text-amber-500">
             <Calculator size={20} />
             Liquidación Final
           </h3>
-          <div className="space-y-3">
+          <div className="space-y-4">
             <div className="flex justify-between text-slate-500 font-black uppercase text-[10px] tracking-widest border-b border-white/5 pb-2">
               <span>Costo Neto</span>
               <span className="text-white">{settings.currency}{subtotal.toLocaleString()}</span>
             </div>
+
+            {/* Selector de Validez */}
+            <div className="space-y-2">
+               <div className="flex items-center gap-2">
+                 <Calendar size={12} className="text-slate-500" />
+                 <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Validez de Oferta (Días)</span>
+               </div>
+               <input 
+                type="number" 
+                value={validDays} 
+                onChange={(e) => setValidDays(parseInt(e.target.value) || 0)} 
+                className="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 font-black text-amber-500 outline-none text-sm focus:border-amber-500/50" 
+              />
+            </div>
+
             <div className="flex items-center justify-between gap-4">
                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Tag size={12}/> % BONIF.</span>
-               <input type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} className="w-16 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-right font-black text-amber-500 outline-none text-xs" />
+               <input type="number" value={discount} onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)} className="w-20 bg-slate-900 border border-slate-800 rounded-lg px-2 py-2 text-right font-black text-amber-500 outline-none text-xs" />
             </div>
             <div className="flex items-center justify-between gap-4">
                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2"><Percent size={12}/> % IVA/GAST.</span>
-               <input type="number" value={taxRate} onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} className="w-16 bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-right font-black text-amber-500 outline-none text-xs" />
+               <input type="number" value={taxRate} onChange={(e) => setTaxRate(parseFloat(e.target.value) || 0)} className="w-20 bg-slate-900 border border-slate-800 rounded-lg px-2 py-2 text-right font-black text-amber-500 outline-none text-xs" />
             </div>
+            
             <div className="pt-4 flex flex-col items-end gap-1">
               <span className="text-[9px] font-black text-amber-600 uppercase tracking-[0.4em] italic">Inversión Final</span>
               <span className="text-4xl md:text-5xl font-black text-white tracking-tighter italic leading-none">{settings.currency}{total.toLocaleString()}</span>
             </div>
           </div>
+          
           <button onClick={handleSave} className="w-full bg-amber-500 text-slate-950 font-black py-5 rounded-2xl shadow-xl shadow-amber-900/20 flex items-center justify-center gap-3 uppercase italic tracking-tighter text-base active:scale-95 transition-transform border-b-4 border-amber-700">
             <Save size={20} />
-            GUARDAR OBRA
+            EMITIR COTIZACIÓN
           </button>
-          <div className="text-center">
-            <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest">
-              Válido hasta: {new Date(new Date().setDate(new Date().getDate() + validDays)).toLocaleDateString()}
-            </p>
+          
+          <div className="text-center bg-slate-900/50 py-3 rounded-2xl border border-white/5">
+            <p className="text-[8px] text-slate-500 uppercase font-black tracking-widest mb-1">Presupuesto vigente hasta el:</p>
+            <p className="text-xs font-black text-white font-mono">{expirationDate.toLocaleDateString()}</p>
           </div>
         </div>
       </div>
