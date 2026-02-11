@@ -102,7 +102,26 @@ const BudgetHistory: React.FC<BudgetHistoryProps> = ({ budgets, settings, onDele
   };
 
   const sendWhatsApp = (b: Budget) => {
-    const text = `👷 *${settings.name.toUpperCase()}*\n\nHola *${b.client.name.toUpperCase()}*, envío cotización adjunta.\n\n🏗️ *ID:* ${b.id}\n💰 *Monto:* ${settings.currency}${b.total.toLocaleString()}\n🗓️ *Vence:* ${new Date(b.validUntil).toLocaleDateString()}\n\nFavor de confirmar para iniciar obra.`;
+    const itemsDetail = b.items
+      .map(i => `• *${i.name}*\n  ${i.quantity} ${i.unit} x ${settings.currency}${i.price.toLocaleString()} = _${settings.currency}${i.subtotal.toLocaleString()}_`)
+      .join('\n\n');
+
+    const text = `👷 *${settings.name.toUpperCase()} 🏗️*
+📋 *COTIZACIÓN TÉCNICA*
+
+🏗️ *Proyecto:* ${b.client.name.toUpperCase()}
+📄 *Expediente:* ${b.id}
+
+*DETALLE DE RUBROS:*
+${itemsDetail}
+
+---------------------------------
+💰 *TOTAL PRESUPUESTO:* ${settings.currency}${b.total.toLocaleString()}
+---------------------------------
+
+_Presupuesto válido hasta el ${new Date(b.validUntil).toLocaleDateString()}._
+Saludos, ${settings.ownerName}.`;
+
     window.open(`https://wa.me/${b.client.phone.replace(/\D/g, '')}?text=${encodeURIComponent(text)}`, '_blank');
   };
 
